@@ -29,7 +29,15 @@ export interface IStorage {
   getApplicationsByStudent(studentId: number): Promise<(Application & { job: Job, student: User })[]>;
   getApplicationsByJob(jobId: number): Promise<(Application & { job: Job, student: User })[]>;
   getApplicationsByEmployer(employerId: number): Promise<(Application & { job: Job, student: User })[]>;
-  updateApplicationStatus(id: number, status: ApplicationStatus): Promise<Application | undefined>;
+  updateApplication(
+  id: number,
+  data: {
+    status: ApplicationStatus;
+    currentRound?: string | null;
+    remarks?: string | null;
+    updatedAt: Date;
+  }
+): Promise<Application | undefined>;
   getAllApplications(): Promise<Application[]>;
 
   // Stats
@@ -165,13 +173,27 @@ export class DatabaseStorage implements IStorage {
     return results.map(r => ({ ...r.application, job: r.job, student: r.student }));
   }
 
-  async updateApplicationStatus(id: number, status: ApplicationStatus): Promise<Application | undefined> {
-    const [app] = await db.update(applications)
-      .set({ status })
-      .where(eq(applications.id, id))
-      .returning();
-    return app;
+  async updateApplication(
+  id: number,
+  data: {
+    status: string;
+    currentRound?: string | null;
+    remarks?: string | null;
+    updatedAt: Date;
   }
+) {
+  return db
+    .update(applications)
+    .set({
+      status: data.status,
+      currentRound: data.currentRound ?? null,
+      remarks: data.remarks ?? null,
+      updatedAt: data.updatedAt,
+    })
+    .where(eq(applications.id, id))
+    .returning()
+    .get();
+}
 
   async getAllApplications(): Promise<Application[]> {
     return await db.select().from(applications);

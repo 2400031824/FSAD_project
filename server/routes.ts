@@ -228,41 +228,49 @@ export async function registerRoutes(
   });
 
   app.patch(api.applications.updateStatus.path, requireAuth, async (req, res) => {
-    const userId = req.session.userId;
-    if (!userId) {
-      return res.status(401).json({ message: "Not authenticated" });
-    }
-    
-    const user = await storage.getUser(userId);
-    if (!user || !["employer", "admin", "officer"].includes(user.role)) {
-      return res.status(403).json({ message: "Only employers and admins can update applications" });
+  const userId = req.session.userId;
+  if (!userId) {
+    return res.status(401).json({ message: "Not authenticated" });
+  }
+
+  const user = await storage.getUser(userId);
+  if (!user || !["employer", "admin", "officer"].includes(user.role)) {
+    return res.status(403).json({ message: "Only employers and admins can update applications" });
+  }
+
+  try {
+    const input = updateApplicationStatusSchema.parse(req.body);
+    const appId = Number(req.params.id);
+
+    const application = await storage.getApplicationById(appId);
+    if (!application) {
+      return res.status(404).json({ message: "Application not found" });
     }
 
-    try {
-      const input = updateApplicationStatusSchema.parse(req.body);
-      
-      // Authorization: Verify employer owns the job this application is for
-      if (user.role === "employer") {
-        const appId = Number(req.params.id);
-        const application = await storage.getApplicationById(appId);
-        if (!application) {
-          return res.status(404).json({ message: "Application not found" });
-        }
-        const job = await storage.getJob(application.jobId);
-        if (!job || job.employerId !== user.id) {
-          return res.status(403).json({ message: "Cannot update applications for this job" });
-        }
+    // Employer ownership check
+    if (user.role === "employer") {
+      const job = await storage.getJob(application.jobId);
+      if (!job || job.employerId !== user.id) {
+        return res.status(403).json({ message: "Cannot update applications for this job" });
       }
-      
-      const updated = await storage.updateApplicationStatus(Number(req.params.id), input.status);
-      res.json(updated);
-    } catch (err) {
-      if (err instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid status value", errors: err.errors });
-      }
-      res.status(500).json({ message: "Failed to update application" });
     }
-  });
+
+    const updated = await storage.updateApplication(appId, {
+      status: input.status,
+      currentRound: input.currentRound ?? null,
+      remarks: input.remarks ?? null,
+      updatedAt: new Date(),
+    });
+
+    res.json(updated);
+  } catch (err) {
+    if (err instanceof z.ZodError) {
+      return res.status(400).json({ message: "Invalid input", errors: err.errors });
+    }
+    console.error("Update application error:", err);
+    res.status(500).json({ message: "Failed to update application" });
+  }
+});
 
   // Stats
   app.get(api.stats.get.path, requireAuth, async (req, res) => {

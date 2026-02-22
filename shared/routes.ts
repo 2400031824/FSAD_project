@@ -104,31 +104,46 @@ export const api = {
       },
     },
   },
-  applications: {
-    list: {
-      method: "GET" as const,
-      path: "/api/applications",
-      responses: {
-        200: z.array(z.custom<typeof applications.$inferSelect & { job: typeof jobs.$inferSelect, student: typeof users.$inferSelect }>()),
-      },
-    },
-    create: {
-      method: "POST" as const,
-      path: "/api/applications",
-      input: z.object({ jobId: z.number() }),
-      responses: {
-        201: z.custom<typeof applications.$inferSelect>(),
-      },
-    },
-    updateStatus: {
-      method: "PATCH" as const,
-      path: "/api/applications/:id/status",
-      input: z.object({ status: z.enum(["applied", "shortlisted", "selected", "rejected"]) }),
-      responses: {
-        200: z.custom<typeof applications.$inferSelect>(),
-      },
+applications: {
+  list: {
+    method: "GET" as const,
+    path: "/api/applications",
+    responses: {
+      200: z.array(
+        z.custom<
+          typeof applications.$inferSelect & {
+            job: typeof jobs.$inferSelect;
+            student: typeof users.$inferSelect;
+          }
+        >()
+      ),
     },
   },
+
+  create: {
+    method: "POST" as const,
+    path: "/api/applications",
+    input: z.object({ jobId: z.number() }),
+    responses: {
+      201: z.custom<typeof applications.$inferSelect>(),
+    },
+  },
+
+  updateStatus: {
+    method: "PATCH" as const,
+    path: "/api/applications/:id/status",
+    input: z.object({
+      status: z.enum(applicationStatuses),
+      currentRound: z.string().optional(),
+      remarks: z.string().optional(),
+    }),
+    responses: {
+      200: z.custom<typeof applications.$inferSelect>(),
+      400: errorSchemas.validation,
+      404: errorSchemas.notFound,
+    },
+  },
+},
   stats: {
     get: {
       method: "GET" as const,
