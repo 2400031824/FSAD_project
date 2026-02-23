@@ -114,7 +114,7 @@ export class DatabaseStorage implements IStorage {
     .from(jobs)
     .innerJoin(users, eq(jobs.employerId, users.id));
     
-    return results.map(r => ({ ...r.job, employer: r.employer }));
+    return results.map((r: any) => ({ ...r.job, employer: r.employer }));
   }
 
   async getJobsByEmployer(employerId: number): Promise<Job[]> {
@@ -142,7 +142,7 @@ export class DatabaseStorage implements IStorage {
     .innerJoin(users, eq(applications.studentId, users.id))
     .where(eq(applications.studentId, studentId));
 
-    return results.map(r => ({ ...r.application, job: r.job, student: r.student }));
+    return results.map((r: any) => ({ ...r.application, job: r.job, student: r.student }));
   }
 
   async getApplicationsByJob(jobId: number): Promise<(Application & { job: Job, student: User })[]> {
@@ -156,7 +156,7 @@ export class DatabaseStorage implements IStorage {
     .innerJoin(users, eq(applications.studentId, users.id))
     .where(eq(applications.jobId, jobId));
 
-    return results.map(r => ({ ...r.application, job: r.job, student: r.student }));
+    return results.map((r: any) => ({ ...r.application, job: r.job, student: r.student }));
   }
 
   async getApplicationsByEmployer(employerId: number): Promise<(Application & { job: Job, student: User })[]> {
@@ -170,7 +170,7 @@ export class DatabaseStorage implements IStorage {
     .innerJoin(users, eq(applications.studentId, users.id))
     .where(eq(jobs.employerId, employerId));
 
-    return results.map(r => ({ ...r.application, job: r.job, student: r.student }));
+    return results.map((r: any) => ({ ...r.application, job: r.job, student: r.student }));
   }
 
   async updateApplication(
