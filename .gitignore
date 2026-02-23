@@ -15,9 +15,6 @@ vite.config.ts.*
 .env.local
 .env.production
 
-# Prisma
-.prisma/
-prisma/dev.db
 
 # Docker / Database volumes
 docker-data/

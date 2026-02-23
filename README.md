@@ -1,252 +1,137 @@
-## 🚀Placement Interaction System
-FSAD-PS14 | Full Stack Application Development Project
+## 🚀 Placement Interaction System
+FSAD – PS14 | Full Stack Application Development
+
+A role‑based full‑stack web application designed to modernize campus recruitment workflows. It replaces spreadsheet‑driven chaos with a secure, lifecycle‑driven process that keeps students, employers, officers, and admins in sync.
+
+---
+
+## 📌 Overview
+Traditional placement systems suffer from:
+
+- No real‑time visibility for students
+- Manual tracking by placement officers
+- Unstructured employer updates
+- Fragmented communication and poor accountability
 
-A modern, full-stack, role-based web application designed to manage and track college placement records efficiently.
-Built with a clean architecture, Docker-first portability, and a cute, modern UI (not your average boring CRUD app).
+This platform introduces a controlled application lifecycle (Applied → Shortlisted → Selected/Rejected) enforced by backend RBAC. Employers update statuses, students receive instant feedback, and officers monitor overall progress.
 
-## 📌 About the Project
+---
 
-The Placement Interaction System is a centralized platform that connects students, employers, placement officers, and administrators to streamline the placement process.
+## 🧱 Architecture & Technologies
 
-It allows:
+```
+/ (root)
+├── client/       # React + Vite frontend (shadcn/ui, Tailwind)
+├── server/       # Express API in TypeScript
+├── shared/       # Zod schemas and route definitions
+├── migrations/   # Drizzle SQL migrations
+└── Data/         # SQLite database file (dev)
+```
 
-Employers to post jobs
+| Layer     | Stack                          |
+|-----------|-------------------------------|
+| Frontend  | React 18 · Vite · TailwindCSS · shadcn/ui · React Query |
+| Backend   | Node 20 · Express · TypeScript · Drizzle ORM · SQLite |
+| Auth      | express-session + cookies (SESSION_SECRET) |
+| Build     | esbuild & Vite (`npm run build`) |
 
-Students to apply and track application status
+---
 
-Placement officers to monitor placement progress
+## 👥 User Roles & Features
 
-Admins to manage users and view analytics
+| Role                | Capabilities                                      |
+|---------------------|---------------------------------------------------|
+| **Admin**           | Manage users, approve/block employers, view stats |
+| **Student**         | Register/login, upload resume, apply, track status |
+| **Employer**        | Post jobs, review applicants, update statuses     |
+| **Placement Officer** | Monitor placements, view aggregated analytics     |
 
-This project is developed as part of the FSAD (Full Stack Application Development) Software Development Project.
+All API routes validate authentication and enforce role restrictions.
 
-## 🎯 Problem Statement
+---
 
-Traditional placement management systems rely heavily on manual processes, spreadsheets, and fragmented communication, which leads to inefficiency and lack of transparency.
+## 🔍 Core Features
 
-This system provides a digital, role-based, and scalable solution to manage placements effectively.
+- Lifecycle‑driven status updates
+- Role‑based access control (RBAC) enforced server‑side
+- Resume upload (PDF/DocX) with storage abstraction
+- Dashboard pages with color‑coded badges and charts
+- JWT‑free, session‑based authentication with secure cookies
+- SQLite database for easy local development; migrate with Drizzle
+- Type‑safe shared schemas via Zod and `@shared` imports
 
-## 🧠 Objectives
+---
 
-Automate the placement workflow
+## 🧩 Setup & Usage
 
-Enable transparent job application tracking
+1. **Clone the repo**
+   ```bash
+   git clone https://github.com/your-username/placement-interaction-system.git
+   cd FSAD_project
+   ```
 
-Provide role-based access control
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
 
-Maintain structured placement records
+3. **Configure environment**
+   Copy `.env.example` to `.env` and set:
+   ```env
+   SESSION_SECRET=some-long-random-string
+   PORT=3000        # optional
+   ```
 
-Ensure portability and easy deployment
+4. **Development server**
+   ```bash
+   npm run dev
+   ```
+   This command starts both the backend and the Vite frontend on a single port (default 3000).
 
-Deliver a clean and user-friendly interface
+5. **Production build & run**
+   ```bash
+   npm run build   # bundles client/server to dist/
+   npm start       # serve from dist/
+   ```
 
-## 👥 User Roles & Functionalities
-## 🔑 Admin
+6. **Database migrations**
+   - Modify `shared/schema.ts`, then run:
+     ```bash
+     npm run db:push
+     ```
+   - The SQLite file is located in `Data/db.sqlite`.
 
-Manage all users
+7. **Type checking**
+   ```bash
+   npm run check
+   ```
 
-Approve or block employers
+---
 
-View overall placement statistics
+## 🗄 Sample Data
 
-## 🎓 Student
+Migrations include seed logic. On first run the database is populated with example users, jobs, and applications so you can explore the app without manual entry.
 
-Register and log in
+---
 
-Create and update profile
+## 🔧 Maintenance & Cleanup
 
-Upload resume
+Legacy configuration files (Prisma, Docker‑Compose, PostgreSQL examples) have been removed. The current stack uses only Drizzle + SQLite for simplicity.
 
-Browse job postings
+Unnecessary directories such as `attached_assets/` and `prisma/` have been deleted.
 
-Apply for jobs
+---
 
-Track application status
-(Applied / Shortlisted / Selected / Rejected)
+## 🔮 Future Enhancements
 
-## 🏢 Employer
+- Multi‑round interview workflow engine
+- AI‑assisted resume screening
+- WebSocket notifications for real‑time updates
+- Advanced analytics dashboards
+- Dockerized production deployment support
 
-Register and log in
+---
 
-Post job openings
+## 📄 License & Credits
 
-View applicants
-
-Update application status
-
-## 🧑‍💼 Placement Officer
-
-Monitor student placements
-
-View placement progress
-
-Generate placement reports
-
-## ✨ Key Features
-
-🔐 Secure authentication using JWT
-
-👤 Role-based access control (RBAC)
-
-📄 Resume upload support
-
-📊 Placement tracking dashboards
-
-🎨 Modern, cute, and responsive UI
-
-🗄️ Relational database design
-
-🐳 Dockerized setup (run anywhere)
-
-⚙️ Auto database migration and seeding
-
-## 🎨 UI & UX Highlights
-
-Soft pastel color palette
-
-Rounded cards and buttons
-
-Gradient headers and navigation
-
-Status badges with colors
-
-Smooth hover and transition animations
-
-Clean layouts instead of cluttered tables
-
-Responsive design for all devices
-
-The UI is designed to look like a real startup product, not just an academic prototype.
-
-## 🛠️ Tech Stack
-## Frontend
-
-React (Vite)
-
-Tailwind CSS
-
-shadcn/ui
-
-Lucide Icons
-
-Framer Motion
-
-## Backend
-
-Node.js
-
-Express.js
-
-Prisma ORM
-
-## Database
-
-PostgreSQL
-
-Infrastructure
-
-Docker
-
-Docker Compose
-
-Environment variables (.env)
-
-## 🗂️ Project Structure
-placement-system/
-├── backend/
-│   ├── prisma/
-│   │   ├── schema.prisma
-│   │   └── seed.js
-│   ├── routes/
-│   ├── controllers/
-│   ├── middleware/
-│   ├── Dockerfile
-│   └── server.js
-├── frontend/
-│   ├── src/
-│   ├── components/
-│   ├── pages/
-│   ├── Dockerfile
-│   └── index.html
-├── docker-compose.yml
-├── .env.example
-├── .gitignore
-└── README.md
-
-## 🗄️ Database Design (Overview)
-
-## Main entities:
-
-Users
-
-Students
-
-Employers
-
-Jobs
-
-Applications
-
-## Relationships:
-
-One user → one role
-
-One employer → many jobs
-
-One student → many applications
-
-One job → many applications
-
-Implemented using Prisma ORM with proper foreign keys and constraints.
-
-## 🚀 Setup & Installation
-## 🔧 Prerequisites
-
-Docker
-
-Docker Compose
-
-No need to install Node.js or PostgreSQL manually.
-
-## ▶️ Run the Application (ONE COMMAND)
-docker-compose up
-
-
-This command will:
-
-Start the backend server
-
-Start the frontend application
-
-Start the PostgreSQL database
-
-Run database migrations
-
-Seed sample data
-
-## 🌍 Portability Guarantee
-
-✔️ Runs on Replit
-✔️ Runs on local machine
-✔️ Runs on any system with Docker
-
-No environment-specific setup required.
-
-## 🔐 Environment Variables
-
-Create a .env file using .env.example:
-
-DATABASE_URL=postgresql://user:password@db:5432/placement_db
-JWT_SECRET=your_secret_key
-
-## 🧪 Sample Data
-
-The application seeds:
-
-Sample users for each role
-
-Sample job postings
-
-Sample applications
-
-This allows easy demo and testing.
+Project developed by Siva Raga Adithi Kotapothula, Bhagya Yelleti, and Jayarama Reddy for KL University FSAD.
