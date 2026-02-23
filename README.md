@@ -132,6 +132,35 @@ Unnecessary directories such as `attached_assets/` and `prisma/` have been delet
 
 ---
 
-## 📄 License & Credits
+## � Deployment
+
+The application can be deployed anywhere that can run a Node 20 container. Two common approaches:
+
+1. **Docker (recommended)**
+   - Build the image:
+     ```bash
+     docker build -t placement-interaction-system:latest .
+     ```
+   - Run the container, exposing port 3000:
+     ```bash
+     docker run --rm -e SESSION_SECRET=your_secret -p 3000:3000 placement-interaction-system:latest
+     ```
+   - Push to a registry (Docker Hub, GitHub Container Registry) and configure your cloud provider to pull the image.
+
+2. **Cloud platform (Azure/AWS/GCP/Heroku/etc.)**
+   - Any provider that supports Node.js can host the compiled server in `dist/`.
+   - Set `NODE_ENV=production` and supply a `SESSION_SECRET` via environment variables.
+   - Ensure the `Data/db.sqlite` file is persisted (or switch to an external database such as PostgreSQL and update `server/db.ts`).
+
+For **Azure App Service with Docker**:
+
+- Push the image to a container registry.
+- Create a Web App for Containers and point it at the image.
+- Add `SESSION_SECRET` and optional `PORT` settings in the App Service configuration.
+
+> ⚠️ This repository does not include automated CI/CD; you can add a GitHub Actions workflow to build, test, and deploy on push.
+
+
+## �📄 License & Credits
 
 Project developed by Siva Raga Adithi Kotapothula, Bhagya Yelleti, and Jayarama Reddy for KL University FSAD.
