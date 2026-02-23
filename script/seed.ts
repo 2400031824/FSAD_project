@@ -1,6 +1,4 @@
 import postgres from "postgres";
-import { drizzle } from "drizzle-orm/postgres-js";
-import * as schema from "../shared/schema";
 import { hash } from "bcryptjs";
 
 const databaseUrl = process.env.DATABASE_URL;
@@ -14,8 +12,7 @@ async function seedDatabase() {
   console.log("🌱 Starting database seed...");
 
   try {
-    const sql = postgres(databaseUrl);
-    const db = drizzle(sql, { schema });
+    const sql = postgres(databaseUrl as string);
 
     console.log("📊 Creating tables if they don't exist...");
 
@@ -95,53 +92,53 @@ async function seedDatabase() {
     // Insert admin
     const adminResult = await sql`
       INSERT INTO users (username, password, role, name, email, created_at)
-      VALUES ('admin', $1, 'admin', 'Admin User', 'admin@fsad.com', $2)
+      VALUES ('admin', ${adminPassword}, 'admin', 'Admin User', 'admin@fsad.com', ${now})
       RETURNING id;
-    `([adminPassword, now]);
+    `;
     const adminId = adminResult[0].id;
 
     // Insert officer
     const officerResult = await sql`
       INSERT INTO users (username, password, role, name, email, created_at)
-      VALUES ('officer', $1, 'officer', 'Placement Officer', 'officer@fsad.com', $2)
+      VALUES ('officer', ${officerPassword}, 'officer', 'Placement Officer', 'officer@fsad.com', ${now})
       RETURNING id;
-    `([officerPassword, now]);
+    `;
 
     // Insert students
     const student1Result = await sql`
       INSERT INTO users (username, password, role, name, email, created_at)
-      VALUES ('student1', $1, 'student', 'Raj Kumar', 'raj@student.com', $2)
+      VALUES ('student1', ${studentPassword}, 'student', 'Raj Kumar', 'raj@student.com', ${now})
       RETURNING id;
-    `([studentPassword, now]);
+    `;
     const student1Id = student1Result[0].id;
 
     const student2Result = await sql`
       INSERT INTO users (username, password, role, name, email, created_at)
-      VALUES ('student2', $1, 'student', 'Priya Singh', 'priya@student.com', $2)
+      VALUES ('student2', ${studentPassword}, 'student', 'Priya Singh', 'priya@student.com', ${now})
       RETURNING id;
-    `([studentPassword, now]);
+    `;
     const student2Id = student2Result[0].id;
 
     const student3Result = await sql`
       INSERT INTO users (username, password, role, name, email, created_at)
-      VALUES ('student3', $1, 'student', 'Arjun Patel', 'arjun@student.com', $2)
+      VALUES ('student3', ${studentPassword}, 'student', 'Arjun Patel', 'arjun@student.com', ${now})
       RETURNING id;
-    `([studentPassword, now]);
+    `;
     const student3Id = student3Result[0].id;
 
     // Insert employers
     const employer1Result = await sql`
       INSERT INTO users (username, password, role, name, email, created_at)
-      VALUES ('google', $1, 'employer', 'Google India', 'jobs@google.com', $2)
+      VALUES ('google', ${employerPassword}, 'employer', 'Google India', 'jobs@google.com', ${now})
       RETURNING id;
-    `([employerPassword, now]);
+    `;
     const employer1Id = employer1Result[0].id;
 
     const employer2Result = await sql`
       INSERT INTO users (username, password, role, name, email, created_at)
-      VALUES ('microsoft', $1, 'employer', 'Microsoft India', 'careers@microsoft.com', $2)
+      VALUES ('microsoft', ${employerPassword}, 'employer', 'Microsoft India', 'careers@microsoft.com', ${now})
       RETURNING id;
-    `([employerPassword, now]);
+    `;
     const employer2Id = employer2Result[0].id;
 
     console.log("👥 Creating student profiles...");
@@ -150,10 +147,10 @@ async function seedDatabase() {
     await sql`
       INSERT INTO students (user_id, department, cgpa, graduation_year, resume_url)
       VALUES
-        ($1, 'Computer Science', '8.5', 2024, '/resumes/raj.pdf'),
-        ($2, 'Electronics', '8.2', 2024, '/resumes/priya.pdf'),
-        ($3, 'Information Technology', '8.8', 2024, '/resumes/arjun.pdf');
-    `([student1Id, student2Id, student3Id]);
+        (${student1Id}, 'Computer Science', '8.5', 2024, '/resumes/raj.pdf'),
+        (${student2Id}, 'Electronics', '8.2', 2024, '/resumes/priya.pdf'),
+        (${student3Id}, 'Information Technology', '8.8', 2024, '/resumes/arjun.pdf');
+    `;
 
     console.log("🏢 Creating employer profiles...");
 
@@ -161,9 +158,9 @@ async function seedDatabase() {
     await sql`
       INSERT INTO employers (user_id, company_name, industry, website, is_approved)
       VALUES
-        ($1, 'Google India', 'Technology', 'https://google.com', true),
-        ($2, 'Microsoft India', 'Technology', 'https://microsoft.com', true);
-    `([employer1Id, employer2Id]);
+        (${employer1Id}, 'Google India', 'Technology', 'https://google.com', true),
+        (${employer2Id}, 'Microsoft India', 'Technology', 'https://microsoft.com', true);
+    `;
 
     console.log("💼 Creating job postings...");
 
@@ -171,46 +168,46 @@ async function seedDatabase() {
     const job1Result = await sql`
       INSERT INTO jobs (employer_id, title, description, requirements, location, salary, posted_at)
       VALUES (
-        $1,
+        ${employer1Id},
         'Software Engineer - Full Stack',
         'We are looking for experienced full-stack developers to join our team and build amazing applications.',
         'Node.js, React, PostgreSQL, Docker, AWS',
         'Bangalore, India',
         '12-15 LPA',
-        $2
+        ${now}
       )
       RETURNING id;
-    `([employer1Id, now]);
+    `;
     const job1Id = job1Result[0].id;
 
     const job2Result = await sql`
       INSERT INTO jobs (employer_id, title, description, requirements, location, salary, posted_at)
       VALUES (
-        $1,
+        ${employer2Id},
         'Software Engineer - Web Development',
         'Join our web development team to create cutting-edge web applications.',
         '.NET, Angular, SQL Server, Azure',
         'Pune, India',
         '13-16 LPA',
-        $2
+        ${now}
       )
       RETURNING id;
-    `([employer2Id, now]);
+    `;
     const job2Id = job2Result[0].id;
 
     const job3Result = await sql`
       INSERT INTO jobs (employer_id, title, description, requirements, location, salary, posted_at)
       VALUES (
-        $1,
+        ${employer1Id},
         'Data Engineer',
         'Build scalable data pipelines and work with big data technologies.',
         'Python, Spark, Hadoop, SQL, AWS',
         'Bangalore, India',
         '14-17 LPA',
-        $2
+        ${now}
       )
       RETURNING id;
-    `([employer1Id, now]);
+    `;
     const job3Id = job3Result[0].id;
 
     console.log("📝 Creating applications...");
@@ -219,12 +216,12 @@ async function seedDatabase() {
     await sql`
       INSERT INTO applications (job_id, student_id, status, current_round, remarks, applied_at, updated_at)
       VALUES
-        ($1, $2, 'Applied', NULL, 'Initial application received', $6, $6),
-        ($1, $3, 'Shortlisted', 'Round 1', 'Selected for technical interview', $6, $6),
-        ($2, $2, 'Selected', 'Round 3', 'Offer extended', $6, $6),
-        ($3, $4, 'Applied', NULL, 'Application under review', $6, $6),
-        ($2, $4, 'Rejected', 'Round 2', 'Not selected after interview', $6, $6);
-    `([job1Id, student1Id, student2Id, student3Id, job2Id, now]);
+        (${job1Id}, ${student1Id}, 'Applied', NULL, 'Initial application received', ${now}, ${now}),
+        (${job1Id}, ${student2Id}, 'Shortlisted', 'Round 1', 'Selected for technical interview', ${now}, ${now}),
+        (${job2Id}, ${student2Id}, 'Selected', 'Round 3', 'Offer extended', ${now}, ${now}),
+        (${job3Id}, ${student3Id}, 'Applied', NULL, 'Application under review', ${now}, ${now}),
+        (${job2Id}, ${student3Id}, 'Rejected', 'Round 2', 'Not selected after interview', ${now}, ${now});
+    `;
 
     console.log("✨ Database seeding completed successfully!");
     console.log("\n📋 Test Credentials:");
