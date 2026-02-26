@@ -1,0 +1,11 @@
+{
+  "build": {
+    "builder": "nixpacks",
+    "buildpack": "node"
+  },
+  "deploy": {
+    "startCommand": "npm run build && npm start",
+    "healthcheckPath": "/",
+    "restartPolicyMaxRetries": 5
+  }
+}

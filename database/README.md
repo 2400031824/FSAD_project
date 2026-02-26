@@ -7,7 +7,7 @@ PLACEMENT MANAGEMENT SYSTEM - SCHEMA DOCUMENTATION
 Complete production-ready Supabase schema for managing university placement lifecycle including student applications, job drives, interviews, offers, and analytics.
 
 ## 📋 Table of Contents
-
+no u 
 - [Overview](#overview)
 - [Architecture](#architecture)
 - [Setup Instructions](#setup-instructions)
