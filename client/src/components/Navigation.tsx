@@ -1,18 +1,13 @@
 import { Link, useLocation } from "wouter";
 import { useUser, useLogout } from "@/hooks/use-auth";
-import { Button } from "@/components/ui/button";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { 
-  LogOut, 
-  Briefcase, 
-  LayoutDashboard, 
+  LayoutDashboard,
   Users,
-  ChevronDown
+  Briefcase,
+  CalendarDays,
+  BarChart3,
+  Settings2,
+  LogOut,
 } from "lucide-react";
 
 export function Navigation() {
@@ -22,88 +17,96 @@ export function Navigation() {
 
   if (!user) return null;
 
-  const navItems = {
-    student: [
-      { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-      { label: "Opportunities", href: "/jobs", icon: Briefcase },
-    ],
-    employer: [
-      { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-      { label: "Opportunities", href: "/jobs", icon: Briefcase },
-    ],
-    admin: [
-      { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-      { label: "Opportunities", href: "/jobs", icon: Briefcase },
-      { label: "Users", href: "/users", icon: Users },
-    ],
-    officer: [
-      { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-      { label: "Opportunities", href: "/jobs", icon: Briefcase },
-      { label: "Users", href: "/users", icon: Users },
-    ],
-  };
+  const navItems = [
+    { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+    { label: "Students", href: "/students", icon: Users },
+    { label: "Recruiters", href: "/recruiters", icon: Briefcase },
+    { label: "Drives", href: "/drives", icon: CalendarDays },
+    { label: "Reports", href: "/reports", icon: BarChart3 },
+    { label: "Settings", href: "/settings", icon: Settings2 },
+  ];
 
-  const items = navItems[user.role as keyof typeof navItems] || navItems.student;
+  const initials =
+    user.name
+      ?.split(" ")
+      .map((n: string) => n[0])
+      .join("") || user.username.charAt(0).toUpperCase();
 
   return (
-    <nav className="border-b border-slate-200 bg-white sticky top-0 z-50">
-      <div className="max-w-6xl mx-auto px-6 py-4">
-        <div className="flex justify-between items-center">
-          {/* Logo */}
-          <Link href="/">
-            <div className="font-bold text-lg text-slate-900 cursor-pointer hover:text-blue-600 transition-colors">
-              CampusPlace
+    <aside className="hidden md:flex w-64 xl:w-72 flex-col border-r border-slate-800 bg-gradient-to-b from-slate-950 via-slate-950 to-slate-900/80">
+      {/* Brand / User */}
+      <div className="px-6 pt-6 pb-4 border-b border-slate-800">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="h-10 w-10 rounded-xl bg-violet-600/80 flex items-center justify-center shadow-lg shadow-violet-600/40">
+            <div className="h-5 w-5 rounded-md bg-slate-950 flex items-center justify-center text-xs font-semibold text-violet-400">
+              PM
             </div>
-          </Link>
-
-          {/* Nav Links */}
-          <div className="hidden md:flex items-center gap-8">
-            {items.map(item => {
-              const Icon = item.icon;
-              const isActive = location === item.href;
-              return (
-                <Link key={item.href} href={item.href}>
-                  <div className={`flex items-center gap-2 px-2 py-2 rounded-md transition-colors cursor-pointer
-                    ${isActive 
-                      ? 'text-blue-600 bg-blue-50' 
-                      : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'
-                    }`}
-                  >
-                    <Icon className="w-4 h-4" />
-                    <span className="text-sm font-medium">{item.label}</span>
-                  </div>
-                </Link>
-              );
-            })}
           </div>
-
-          {/* User Menu */}
           <div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="gap-2">
-                  <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-                    <span className="text-sm font-semibold text-blue-700">
-                      {user.username.charAt(0).toUpperCase()}
-                    </span>
-                  </div>
-                  <ChevronDown className="w-4 h-4 text-slate-500" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <div className="px-2 py-2 border-b border-slate-200">
-                  <p className="font-medium text-slate-900">{user.name}</p>
-                  <p className="text-xs text-slate-600 capitalize mt-0.5">{user.role}</p>
-                </div>
-                <DropdownMenuItem onClick={() => logout()} className="text-red-600 focus:text-red-600 cursor-pointer">
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Sign Out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <p className="text-sm font-semibold tracking-wide">
+              PlacementMaster
+            </p>
+            <p className="text-[11px] text-slate-400">
+              Campus Placement Console
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3 rounded-xl bg-slate-900/80 border border-slate-800 px-3 py-3">
+          <div className="h-9 w-9 rounded-full bg-violet-500/90 flex items-center justify-center text-sm font-semibold">
+            {initials}
+          </div>
+          <div className="flex-1">
+            <p className="text-xs font-medium leading-tight">
+              {user.name || user.username}
+            </p>
+            <p className="text-[11px] text-slate-400 capitalize">
+              {user.role || "Placement Officer"}
+            </p>
           </div>
         </div>
       </div>
-    </nav>
+
+      {/* Nav */}
+      <nav className="flex-1 px-3 py-4 space-y-1">
+        {navItems.map((item) => {
+          const Icon = item.icon;
+          const isActive = location === item.href;
+
+          return (
+            <Link key={item.href} href={item.href}>
+              <div
+                className={`group flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer text-sm transition-colors ${
+                  isActive
+                    ? "bg-violet-600 text-white shadow-[0_0_20px_rgba(129,140,248,0.45)]"
+                    : "text-slate-300 hover:text-white hover:bg-slate-800/70"
+                }`}
+              >
+                <Icon
+                  className={`w-4 h-4 ${
+                    isActive ? "text-white" : "text-slate-400 group-hover:text-violet-300"
+                  }`}
+                />
+                <span className="font-medium">{item.label}</span>
+              </div>
+            </Link>
+          );
+        })}
+      </nav>
+
+      {/* Footer */}
+      <div className="px-4 pb-6 pt-2 border-t border-slate-800">
+        <button
+          onClick={() => logout()}
+          className="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-slate-700/80 bg-slate-900/80 px-3 py-2 text-xs font-medium text-slate-200 hover:bg-slate-800 hover:border-violet-500/70 hover:text-white transition-colors"
+        >
+          <LogOut className="w-3.5 h-3.5" />
+          Sign Out
+        </button>
+        <p className="mt-3 text-[10px] text-slate-500 text-center">
+          Authorized Personnel Only
+        </p>
+      </div>
+    </aside>
   );
 }

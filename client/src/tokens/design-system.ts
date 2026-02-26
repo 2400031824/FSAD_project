@@ -59,13 +59,13 @@ export const typography = {
 } as const;
 
 export const colors = {
-  // Primary - Professional blue
+  // Primary - Purple/Blue
   primary: {
-    50: '#eff6ff',
-    100: '#dbeafe',
-    200: '#bfdbfe',
-    600: '#2563eb',
-    700: '#1d4ed8',
+    50: '#f5f3ff',
+    100: '#ede9fe',
+    200: '#ddd6fe',
+    600: '#7c3aed',
+    700: '#6d28d9',
   },
   // Accent - Signal/conversion (green for positive outcomes)
   accent: {
@@ -76,7 +76,7 @@ export const colors = {
   },
   // Status colors
   status: {
-    applied: '#3b82f6',    // Blue - neutral
+    applied: '#6366f1',    // Indigo - neutral
     shortlisted: '#f59e0b', // Amber - promising
     interview: '#8b5cf6',   // Purple - progressing
     selected: '#10b981',    // Green - positive

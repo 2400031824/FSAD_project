@@ -5,39 +5,39 @@
 @tailwind utilities;
 
 :root {
-  /* Modern professional palette */
+  /* Dark mode professional palette */
   --font-body: 'Inter', sans-serif;
 
-  /* Primary - Professional Blue */
-  --primary: 219 89% 52%;
+  /* Primary - Purple/Blue */
+  --primary: 262 80% 50%;
   --primary-foreground: 0 0% 100%;
   
   /* Accent - Success Green */
   --accent: 142 76% 36%;
   --accent-foreground: 0 0% 100%;
 
-  /* Backgrounds */
-  --background: 0 0% 100%;
-  --foreground: 224 71% 4%;
+  /* Backgrounds - Dark Theme */
+  --background: 224 71% 4%;
+  --foreground: 0 0% 97%;
   
-  --card: 0 0% 100%;
-  --card-foreground: 224 71% 4%;
+  --card: 217 33% 17%;
+  --card-foreground: 0 0% 97%;
   
-  --popover: 0 0% 100%;
-  --popover-foreground: 224 71% 4%;
+  --popover: 217 33% 17%;
+  --popover-foreground: 0 0% 97%;
   
-  --secondary: 210 40% 96%;
-  --secondary-foreground: 210 40% 20%;
+  --secondary: 217 33% 25%;
+  --secondary-foreground: 0 0% 97%;
   
-  --muted: 210 40% 96%;
-  --muted-foreground: 215 16% 47%;
+  --muted: 217 33% 20%;
+  --muted-foreground: 215 14% 55%;
   
   --destructive: 0 84.2% 60.2%;
   --destructive-foreground: 0 0% 98%;
 
-  --border: 214 32% 91%;
-  --input: 214 32% 91%;
-  --ring: 219 89% 52%;
+  --border: 217 33% 25%;
+  --input: 217 33% 20%;
+  --ring: 262 80% 50%;
 
   --radius: 0.75rem;
 }
@@ -75,11 +75,11 @@
   }
   
   p {
-    @apply text-base leading-relaxed text-slate-700;
+    @apply text-base leading-relaxed text-slate-300;
   }
   
   .text-muted {
-    @apply text-sm text-slate-600;
+    @apply text-sm text-slate-400;
   }
   
   .text-caption {
@@ -95,22 +95,22 @@
   
   /* Card styling - clean, minimal */
   .card-base {
-    @apply bg-white border border-slate-200 rounded-lg shadow-sm;
+    @apply bg-slate-800 border border-slate-700 rounded-lg shadow-sm;
   }
   
   .card-hover {
-    @apply transition-all duration-200 hover:shadow-md hover:border-slate-300;
+    @apply transition-all duration-200 hover:shadow-md hover:border-slate-600;
   }
   
   /* Input/Form elements */
   .input-base {
-    @apply px-3 py-2 bg-white border border-slate-300 rounded-md;
-    @apply text-base leading-normal;
+    @apply px-3 py-2 bg-slate-900 border border-slate-700 rounded-md;
+    @apply text-base leading-normal text-white;
     @apply transition-colors duration-150;
   }
   
   .input-base:focus {
-    @apply outline-none ring-2 ring-blue-500 border-transparent;
+    @apply outline-none ring-2 ring-purple-500 border-transparent;
   }
   
   /* Typography utilities */

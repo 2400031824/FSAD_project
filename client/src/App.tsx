@@ -8,18 +8,27 @@ import HomePage from "@/pages/HomePage";
 import AuthPage from "@/pages/AuthPage";
 import Dashboard from "@/pages/Dashboard";
 import JobsPage from "@/pages/JobsPage";
+import StudentsPage from "@/pages/StudentsPage";
+import RecruitersPage from "@/pages/RecruitersPage";
+import DrivesPage from "@/pages/DrivesPage";
+import ReportsPage from "@/pages/ReportsPage";
+import SettingsPage from "@/pages/SettingsPage";
 import { Navigation } from "@/components/Navigation";
 import { useUser } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
 
-function PrivateRoute({ component: Component }: { component: React.ComponentType }) {
+function PrivateRoute({
+  component: Component,
+}: {
+  component: React.ComponentType;
+}) {
   const { data: user, isLoading } = useUser();
   const [, setLocation] = useLocation();
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-indigo-50/30">
-        <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+      <div className="min-h-screen flex items-center justify-center bg-[#020617]">
+        <Loader2 className="w-8 h-8 animate-spin text-indigo-400" />
       </div>
     );
   }
@@ -30,9 +39,9 @@ function PrivateRoute({ component: Component }: { component: React.ComponentType
   }
 
   return (
-    <div className="min-h-screen bg-slate-50/50 pb-20">
+    <div className="min-h-screen bg-[#020617] text-slate-50 flex">
       <Navigation />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="flex-1 px-8 py-8 overflow-y-auto">
         <Component />
       </main>
     </div>
@@ -44,7 +53,7 @@ function Router() {
     <Switch>
       <Route path="/" component={HomePage} />
       <Route path="/auth" component={AuthPage} />
-      
+
       {/* Protected Routes */}
       <Route path="/dashboard">
         <PrivateRoute component={Dashboard} />
@@ -52,10 +61,20 @@ function Router() {
       <Route path="/jobs">
         <PrivateRoute component={JobsPage} />
       </Route>
-      
-      {/* Admin/Officer route placeholder - reusing dashboard for simplicity but normally separate */}
-      <Route path="/users">
-        <PrivateRoute component={Dashboard} />
+      <Route path="/students">
+        <PrivateRoute component={StudentsPage} />
+      </Route>
+      <Route path="/recruiters">
+        <PrivateRoute component={RecruitersPage} />
+      </Route>
+      <Route path="/drives">
+        <PrivateRoute component={DrivesPage} />
+      </Route>
+      <Route path="/reports">
+        <PrivateRoute component={ReportsPage} />
+      </Route>
+      <Route path="/settings">
+        <PrivateRoute component={SettingsPage} />
       </Route>
 
       <Route component={NotFound} />
