@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/context/AuthContext";
+import { useLocation } from "wouter";
+import { useLogin, useRegister } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -9,14 +9,17 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter,
 } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
 
 export default function AuthPage() {
-  const navigate = useNavigate();
-  const { signIn } = useAuth();
+  const [, setLocation] = useLocation();
+  const { mutate: login, isPending: isLoginPending } = useLogin();
+  const { mutate: register, isPending: isRegisterPending } = useRegister();
 
   const [loginData, setLoginData] = useState({ username: "", password: "" });
   const [registerData, setRegisterData] = useState({

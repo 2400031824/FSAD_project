@@ -5,12 +5,11 @@
   "license": "MIT",
   "scripts": {
     "dev": "cross-env NODE_ENV=development tsx server/index.ts",
-    "build": "vite build",
+    "build": "tsx script/build-client.ts",
     "start": "npx serve -s dist/public -l 3000",
     "check": "tsc",
     "db:push": "drizzle-kit push",
-    "seed": "cross-env NODE_ENV=production tsx script/seed.ts",
-    "setup": "npm run build && npm run seed"
+    "seed": "cross-env NODE_ENV=production tsx script/seed.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
