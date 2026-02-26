@@ -1,1 +1,1 @@
-web: cd client && npm run preview
+web: npm start

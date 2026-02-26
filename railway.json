@@ -3,8 +3,8 @@
     "builder": "nixpacks"
   },
   "deploy": {
-    "buildCommand": "npm run client:build",
-    "startCommand": "npm run client:preview",
+    "buildCommand": "npm run build",
+    "startCommand": "npm start",
     "healthcheckPath": "/",
     "restartPolicyMaxRetries": 5,
     "memoryGB": 1
