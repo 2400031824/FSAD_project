@@ -182,7 +182,7 @@ export class DatabaseStorage implements IStorage {
     updatedAt: Date;
   }
 ) {
-  return db
+  const [updated] = await db
     .update(applications)
     .set({
       status: data.status,
@@ -191,8 +191,9 @@ export class DatabaseStorage implements IStorage {
       updatedAt: data.updatedAt,
     })
     .where(eq(applications.id, id))
-    .returning()
-    .get();
+    .returning();
+
+  return updated;
 }
 
   async getAllApplications(): Promise<Application[]> {

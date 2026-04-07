@@ -293,18 +293,12 @@ export async function registerRoutes(
     if (!admin) {
       console.log("Seeding database with sample data...");
       
-      // Generate secure random passwords for demo (should be changed immediately)
-      const adminPassword = randomBytes(16).toString('hex');
-      const employerPassword = randomBytes(16).toString('hex');
-      const studentPassword = randomBytes(16).toString('hex');
-      
-      // Log passwords only in development - in production use env vars or secure auth
-      if (process.env.NODE_ENV !== "production") {
-        console.log("DEMO CREDENTIALS (for development only):");
-        console.log(`Admin - username: admin - password: ${adminPassword}`);
-        console.log(`Employers - password: ${employerPassword}`);
-        console.log(`Students - password: ${studentPassword}`);
-      }
+      // Deterministic demo credentials for showcases; override via env in production
+      const adminPassword = process.env.DEMO_ADMIN_PASSWORD || "Admin@123";
+      const employerPassword = process.env.DEMO_EMPLOYER_PASSWORD || "Employer@123";
+      const studentPassword = process.env.DEMO_STUDENT_PASSWORD || "Student@123";
+
+      console.log("Demo credentials loaded for seeded users");
       
       const hashedAdminPassword = await hashPassword(adminPassword);
       await storage.createUser({
