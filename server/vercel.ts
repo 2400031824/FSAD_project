@@ -8,9 +8,6 @@ async function createApiApp() {
   const app = express();
   app.set("trust proxy", 1);
 
-  app.use(express.json());
-  app.use(express.urlencoded({ extended: false }));
-
   const httpServer = createServer(app);
   await registerRoutes(httpServer, app);
 
