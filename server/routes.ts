@@ -111,10 +111,63 @@ export async function registerRoutes(
 
   app.post(api.auth.login.path, async (req, res) => {
     const input = api.auth.login.input.parse(req.body);
-    const user = await storage.getUserByUsername(input.username);
+    let user = await storage.getUserByUsername(input.username);
 
     if (!user || !(await comparePassword(input.password, user.password))) {
-      return res.status(401).json({ message: "Invalid credentials" });
+      const demoPasswords = {
+        admin: process.env.DEMO_ADMIN_PASSWORD || "Admin@123",
+        techcorp: process.env.DEMO_EMPLOYER_PASSWORD || "Employer@123",
+        innovateinc: process.env.DEMO_EMPLOYER_PASSWORD || "Employer@123",
+        globalenterprises: process.env.DEMO_EMPLOYER_PASSWORD || "Employer@123",
+        alice: process.env.DEMO_STUDENT_PASSWORD || "Student@123",
+        bob: process.env.DEMO_STUDENT_PASSWORD || "Student@123",
+        carol: process.env.DEMO_STUDENT_PASSWORD || "Student@123",
+        david: process.env.DEMO_STUDENT_PASSWORD || "Student@123",
+        emma: process.env.DEMO_STUDENT_PASSWORD || "Student@123",
+      } as const;
+
+      const demoUserMeta: Record<string, { role: "admin" | "employer" | "student"; name: string; email: string }> = {
+        admin: { role: "admin", name: "System Admin", email: "admin@college.edu" },
+        techcorp: { role: "employer", name: "Tech Corp HR", email: "hr@techcorp.com" },
+        innovateinc: { role: "employer", name: "Innovate Inc HR", email: "hr@innovate.com" },
+        globalenterprises: { role: "employer", name: "Global Enterprises HR", email: "hr@globalenterprises.com" },
+        alice: { role: "student", name: "Alice Smith", email: "alice@student.edu" },
+        bob: { role: "student", name: "Bob Johnson", email: "bob@student.edu" },
+        carol: { role: "student", name: "Carol Davis", email: "carol@student.edu" },
+        david: { role: "student", name: "David Brown", email: "david@student.edu" },
+        emma: { role: "student", name: "Emma Wilson", email: "emma@student.edu" },
+      };
+
+      const expectedPassword = demoPasswords[input.username as keyof typeof demoPasswords];
+      const demoMeta = demoUserMeta[input.username];
+
+      if (!expectedPassword || !demoMeta || input.password !== expectedPassword) {
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+
+      const hashedPassword = await hashPassword(expectedPassword);
+      if (!user) {
+        const emailUser = await storage.getUserByEmail(demoMeta.email);
+        if (emailUser) {
+          user = emailUser;
+          await storage.updateUserPassword(user.id, hashedPassword);
+        } else {
+          user = await storage.createUser({
+            username: input.username,
+            password: hashedPassword,
+            role: demoMeta.role,
+            name: demoMeta.name,
+            email: demoMeta.email,
+          });
+        }
+      } else {
+        await storage.updateUserPassword(user.id, hashedPassword);
+        user = await storage.getUser(user.id);
+      }
+
+      if (!user) {
+        return res.status(500).json({ message: "Failed to initialize demo user" });
+      }
     }
 
     req.session.userId = user.id;
@@ -284,162 +337,184 @@ export async function registerRoutes(
     res.json(stats);
   });
 
-  // Auto-seed function with secure random passwords
+  // Auto-seed function with deterministic demo credentials
   const seedDatabase = async () => {
-    const admin = await storage.getUserByUsername("admin");
-    if (!admin) {
-      console.log("Seeding database with sample data...");
-      
-      // Deterministic demo credentials for showcases; override via env in production
-      const adminPassword = process.env.DEMO_ADMIN_PASSWORD || "Admin@123";
-      const employerPassword = process.env.DEMO_EMPLOYER_PASSWORD || "Employer@123";
-      const studentPassword = process.env.DEMO_STUDENT_PASSWORD || "Student@123";
+    const adminPassword = process.env.DEMO_ADMIN_PASSWORD || "Admin@123";
+    const employerPassword = process.env.DEMO_EMPLOYER_PASSWORD || "Employer@123";
+    const studentPassword = process.env.DEMO_STUDENT_PASSWORD || "Student@123";
 
-      console.log("Demo credentials loaded for seeded users");
-      
-      const hashedAdminPassword = await hashPassword(adminPassword);
-      await storage.createUser({
-        username: "admin",
-        password: hashedAdminPassword,
-        role: "admin",
-        name: "System Admin",
-        email: "admin@college.edu",
-      });
-      
-      // Create Employers
-      const empPass = await hashPassword(employerPassword);
-      const employers = [];
-      
-      const employer1 = await storage.createUser({
+    const ensureDemoUser = async (options: {
+      username: string;
+      password: string;
+      role: "admin" | "employer" | "student";
+      name: string;
+      email: string;
+      employerDetails?: { companyName: string; industry: string; website: string };
+      studentDetails?: { department: string; cgpa: string; graduationYear: number; resumeUrl: string };
+    }) => {
+      const hashedPassword = await hashPassword(options.password);
+      let user = await storage.getUserByUsername(options.username);
+      if (!user) {
+        user = await storage.getUserByEmail(options.email);
+      }
+
+      if (!user) {
+        user = await storage.createUser({
+          username: options.username,
+          password: hashedPassword,
+          role: options.role,
+          name: options.name,
+          email: options.email,
+        });
+      } else {
+        await storage.updateUserPassword(user.id, hashedPassword);
+      }
+
+      if (options.employerDetails) {
+        const employer = await storage.getEmployer(user.id);
+        if (!employer) {
+          await storage.createEmployer({
+            userId: user.id,
+            companyName: options.employerDetails.companyName,
+            industry: options.employerDetails.industry,
+            website: options.employerDetails.website,
+          });
+        }
+      }
+
+      if (options.studentDetails) {
+        const student = await storage.getStudent(user.id);
+        if (!student) {
+          await storage.createStudent({
+            userId: user.id,
+            department: options.studentDetails.department,
+            cgpa: options.studentDetails.cgpa,
+            graduationYear: options.studentDetails.graduationYear,
+            resumeUrl: options.studentDetails.resumeUrl,
+          });
+        }
+      }
+
+      return user;
+    };
+
+    const admin = await ensureDemoUser({
+      username: "admin",
+      password: adminPassword,
+      role: "admin",
+      name: "System Admin",
+      email: "admin@college.edu",
+    });
+
+    const employers = [
+      await ensureDemoUser({
         username: "techcorp",
-        password: empPass,
+        password: employerPassword,
         role: "employer",
         name: "Tech Corp HR",
         email: "hr@techcorp.com",
-      });
-      employers.push(employer1);
-      await storage.createEmployer({
-        userId: employer1.id,
-        companyName: "Tech Corp",
-        industry: "Software",
-        website: "https://techcorp.com",
-      });
-
-      const employer2 = await storage.createUser({
+        employerDetails: {
+          companyName: "Tech Corp",
+          industry: "Software",
+          website: "https://techcorp.com",
+        },
+      }),
+      await ensureDemoUser({
         username: "innovateinc",
-        password: empPass,
+        password: employerPassword,
         role: "employer",
         name: "Innovate Inc HR",
         email: "hr@innovate.com",
-      });
-      employers.push(employer2);
-      await storage.createEmployer({
-        userId: employer2.id,
-        companyName: "Innovate Inc",
-        industry: "AI/ML",
-        website: "https://innovate.com",
-      });
-
-      const employer3 = await storage.createUser({
+        employerDetails: {
+          companyName: "Innovate Inc",
+          industry: "AI/ML",
+          website: "https://innovate.com",
+        },
+      }),
+      await ensureDemoUser({
         username: "globalenterprises",
-        password: empPass,
+        password: employerPassword,
         role: "employer",
         name: "Global Enterprises HR",
         email: "hr@globalenterprises.com",
-      });
-      employers.push(employer3);
-      await storage.createEmployer({
-        userId: employer3.id,
-        companyName: "Global Enterprises",
-        industry: "Consulting",
-        website: "https://globalenterprises.com",
-      });
+        employerDetails: {
+          companyName: "Global Enterprises",
+          industry: "Consulting",
+          website: "https://globalenterprises.com",
+        },
+      }),
+    ];
 
-      // Create Students
-      const studentPass = await hashPassword(studentPassword);
-      const students = [];
-
-      const student1 = await storage.createUser({
+    const students = [
+      await ensureDemoUser({
         username: "alice",
-        password: studentPass,
+        password: studentPassword,
         role: "student",
         name: "Alice Smith",
         email: "alice@student.edu",
-      });
-      students.push(student1);
-      await storage.createStudent({
-        userId: student1.id,
-        department: "Computer Science",
-        cgpa: "3.8",
-        graduationYear: 2024,
-        resumeUrl: "https://example.com/resume_alice.pdf"
-      });
-
-      const student2 = await storage.createUser({
+        studentDetails: {
+          department: "Computer Science",
+          cgpa: "3.8",
+          graduationYear: 2024,
+          resumeUrl: "https://example.com/resume_alice.pdf",
+        },
+      }),
+      await ensureDemoUser({
         username: "bob",
-        password: studentPass,
+        password: studentPassword,
         role: "student",
         name: "Bob Johnson",
         email: "bob@student.edu",
-      });
-      students.push(student2);
-      await storage.createStudent({
-        userId: student2.id,
-        department: "Information Technology",
-        cgpa: "3.6",
-        graduationYear: 2024,
-        resumeUrl: "https://example.com/resume_bob.pdf"
-      });
-
-      const student3 = await storage.createUser({
+        studentDetails: {
+          department: "Information Technology",
+          cgpa: "3.6",
+          graduationYear: 2024,
+          resumeUrl: "https://example.com/resume_bob.pdf",
+        },
+      }),
+      await ensureDemoUser({
         username: "carol",
-        password: studentPass,
+        password: studentPassword,
         role: "student",
         name: "Carol Davis",
         email: "carol@student.edu",
-      });
-      students.push(student3);
-      await storage.createStudent({
-        userId: student3.id,
-        department: "Computer Science",
-        cgpa: "3.9",
-        graduationYear: 2025,
-        resumeUrl: "https://example.com/resume_carol.pdf"
-      });
-
-      const student4 = await storage.createUser({
+        studentDetails: {
+          department: "Computer Science",
+          cgpa: "3.9",
+          graduationYear: 2025,
+          resumeUrl: "https://example.com/resume_carol.pdf",
+        },
+      }),
+      await ensureDemoUser({
         username: "david",
-        password: studentPass,
+        password: studentPassword,
         role: "student",
         name: "David Brown",
         email: "david@student.edu",
-      });
-      students.push(student4);
-      await storage.createStudent({
-        userId: student4.id,
-        department: "Electronics Engineering",
-        cgpa: "3.5",
-        graduationYear: 2024,
-        resumeUrl: "https://example.com/resume_david.pdf"
-      });
-
-      const student5 = await storage.createUser({
+        studentDetails: {
+          department: "Electronics Engineering",
+          cgpa: "3.5",
+          graduationYear: 2024,
+          resumeUrl: "https://example.com/resume_david.pdf",
+        },
+      }),
+      await ensureDemoUser({
         username: "emma",
-        password: studentPass,
+        password: studentPassword,
         role: "student",
         name: "Emma Wilson",
         email: "emma@student.edu",
-      });
-      students.push(student5);
-      await storage.createStudent({
-        userId: student5.id,
-        department: "Data Science",
-        cgpa: "3.7",
-        graduationYear: 2024,
-        resumeUrl: "https://example.com/resume_emma.pdf"
-      });
+        studentDetails: {
+          department: "Data Science",
+          cgpa: "3.7",
+          graduationYear: 2024,
+          resumeUrl: "https://example.com/resume_emma.pdf",
+        },
+      }),
+    ];
 
-      // Create Jobs
+    const existingJobs = await storage.getJobs();
+    if (existingJobs.length === 0) {
       const job1 = await storage.createJob({
         employerId: employers[0].id,
         title: "Junior React Developer",
@@ -476,7 +551,7 @@ export async function registerRoutes(
         salary: "$90,000 - $120,000"
       });
 
-      const job5 = await storage.createJob({
+      await storage.createJob({
         employerId: employers[2].id,
         title: "Management Consultant",
         description: "Help our clients solve complex business problems and drive transformations.",
@@ -485,7 +560,7 @@ export async function registerRoutes(
         salary: "$80,000 - $100,000"
       });
 
-      const job6 = await storage.createJob({
+      await storage.createJob({
         employerId: employers[2].id,
         title: "Full Stack Developer",
         description: "Build end-to-end solutions for our enterprise clients.",
@@ -494,38 +569,18 @@ export async function registerRoutes(
         salary: "$85,000 - $110,000"
       });
 
-      // Create Sample Applications
-      await storage.createApplication({
-        jobId: job1.id,
-        studentId: students[0].id,
-      });
-
-      await storage.createApplication({
-        jobId: job1.id,
-        studentId: students[1].id,
-      });
-
-      await storage.createApplication({
-        jobId: job3.id,
-        studentId: students[4].id,
-      });
-
-      await storage.createApplication({
-        jobId: job4.id,
-        studentId: students[4].id,
-      });
-
-      await storage.createApplication({
-        jobId: job2.id,
-        studentId: students[2].id,
-      });
-
-      console.log("✓ Database seeded successfully with sample data!");
+      await storage.createApplication({ jobId: job1.id, studentId: students[0].id });
+      await storage.createApplication({ jobId: job1.id, studentId: students[1].id });
+      await storage.createApplication({ jobId: job3.id, studentId: students[4].id });
+      await storage.createApplication({ jobId: job4.id, studentId: students[4].id });
+      await storage.createApplication({ jobId: job2.id, studentId: students[2].id });
     }
-  };
 
+    console.log(`Demo users refreshed. Admin ID: ${admin.id}`);
+  };
   // Run seed
   seedDatabase().catch(err => console.error("Error seeding database:", err));
 
   return httpServer;
 }
+

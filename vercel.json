@@ -2,32 +2,11 @@
   "version": 2,
   "installCommand": "npm install",
   "buildCommand": "npm run build",
-  "builds": [
+  "outputDirectory": "dist/public",
+  "rewrites": [
     {
-      "src": "dist/vercel.cjs",
-      "use": "@vercel/node"
-    },
-    {
-      "src": "dist/public/**",
-      "use": "@vercel/static"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "dist/vercel.cjs"
-    },
-    {
-      "src": "/assets/(.*)",
-      "dest": "dist/public/assets/$1"
-    },
-    {
-      "src": "/favicon.png",
-      "dest": "dist/public/favicon.png"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "dist/public/index.html"
+      "source": "/((?!api/).*)",
+      "destination": "/index.html"
     }
   ]
 }
