@@ -1,44 +1,33 @@
 {
   "version": 2,
-  "buildCommand": "npm run build",
   "installCommand": "npm install",
-  "env": {
-    "NODE_ENV": "production"
-  },
-  "envPrefix": "",
-  "env": {
-    "NODE_ENV": "production",
-    "SESSION_SECRET": "@SESSION_SECRET",
-    "DATABASE_URL": "@DATABASE_URL"
-  },
-  "functions": {
-    "server/index.ts": {
-      "runtime": "nodejs20.x"
-    }
-  },
-  "rewrites": [
+  "buildCommand": "npm run build",
+  "builds": [
     {
-      "source": "/api/(.*)",
-      "destination": "/server/index.cjs"
+      "src": "dist/vercel.cjs",
+      "use": "@vercel/node"
     },
     {
-      "source": "/static/(.*)",
-      "destination": "/public/static/$1"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/public/$1"
+      "src": "dist/public/**",
+      "use": "@vercel/static"
     }
   ],
-  "headers": [
+  "routes": [
     {
-      "source": "/(.*)",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=3600, must-revalidate"
-        }
-      ]
+      "src": "/api/(.*)",
+      "dest": "dist/vercel.cjs"
+    },
+    {
+      "src": "/assets/(.*)",
+      "dest": "dist/public/assets/$1"
+    },
+    {
+      "src": "/favicon.png",
+      "dest": "dist/public/favicon.png"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "dist/public/index.html"
     }
   ]
 }
