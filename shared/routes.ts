@@ -79,6 +79,143 @@ export const api = {
       },
     },
   },
+  recruiters: {
+    list: {
+      method: "GET" as const,
+      path: "/api/recruiters",
+      responses: {
+        200: z.array(
+          z.object({
+            userId: z.number(),
+            username: z.string(),
+            name: z.string(),
+            email: z.string(),
+            companyName: z.string(),
+            industry: z.string().nullable(),
+            website: z.string().nullable(),
+            isApproved: z.boolean().nullable(),
+            activeDrives: z.number(),
+            totalApplications: z.number(),
+          }),
+        ),
+      },
+    },
+    create: {
+      method: "POST" as const,
+      path: "/api/recruiters",
+      input: z.object({
+        username: z.string().min(3),
+        password: z.string().min(8),
+        name: z.string().min(1),
+        email: z.string().email(),
+        companyName: z.string().min(1),
+        industry: z.string().optional(),
+        website: z.string().optional(),
+      }),
+      responses: {
+        201: z.object({
+          id: z.number(),
+          username: z.string(),
+          role: z.string(),
+          name: z.string(),
+          email: z.string(),
+        }),
+        400: errorSchemas.validation,
+      },
+    },
+    details: {
+      method: "GET" as const,
+      path: "/api/recruiters/:id",
+      responses: {
+        200: z.object({
+          recruiter: z.object({
+            userId: z.number(),
+            username: z.string(),
+            name: z.string(),
+            email: z.string(),
+            companyName: z.string(),
+            industry: z.string().nullable(),
+            website: z.string().nullable(),
+            isApproved: z.boolean().nullable(),
+            activeDrives: z.number(),
+            totalApplications: z.number(),
+          }),
+          jobs: z.array(z.custom<typeof jobs.$inferSelect>()),
+        }),
+        404: errorSchemas.notFound,
+      },
+    },
+  },
+  students: {
+    list: {
+      method: "GET" as const,
+      path: "/api/students",
+      responses: {
+        200: z.array(
+          z.object({
+            userId: z.number(),
+            username: z.string(),
+            name: z.string(),
+            email: z.string(),
+            department: z.string().nullable(),
+            cgpa: z.string().nullable(),
+            graduationYear: z.number().nullable(),
+            resumeUrl: z.string().nullable(),
+            status: z.string(),
+            applicationsCount: z.number(),
+            selectedCount: z.number(),
+          }),
+        ),
+      },
+    },
+    create: {
+      method: "POST" as const,
+      path: "/api/students",
+      input: z.object({
+        username: z.string().min(3),
+        password: z.string().min(8),
+        name: z.string().min(1),
+        email: z.string().email(),
+        department: z.string().optional(),
+        cgpa: z.string().optional(),
+        graduationYear: z.number().optional(),
+        resumeUrl: z.string().optional(),
+      }),
+      responses: {
+        201: z.object({
+          id: z.number(),
+          username: z.string(),
+          role: z.string(),
+          name: z.string(),
+          email: z.string(),
+        }),
+        400: errorSchemas.validation,
+      },
+    },
+    details: {
+      method: "GET" as const,
+      path: "/api/students/:id",
+      responses: {
+        200: z.object({
+          student: z.object({
+            userId: z.number(),
+            username: z.string(),
+            name: z.string(),
+            email: z.string(),
+            department: z.string().nullable(),
+            cgpa: z.string().nullable(),
+            graduationYear: z.number().nullable(),
+            resumeUrl: z.string().nullable(),
+            status: z.string(),
+            applicationsCount: z.number(),
+            selectedCount: z.number(),
+          }),
+          applications: z.array(z.custom<typeof applications.$inferSelect>()),
+        }),
+        404: errorSchemas.notFound,
+      },
+    },
+  },
   jobs: {
     list: {
       method: "GET" as const,

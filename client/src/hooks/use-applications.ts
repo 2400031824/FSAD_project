@@ -6,7 +6,7 @@ export function useApplications() {
   return useQuery({
     queryKey: [api.applications.list.path],
     queryFn: async () => {
-      const res = await fetch(api.applications.list.path);
+      const res = await fetch(api.applications.list.path, { credentials: "include" });
       if (!res.ok) throw new Error("Failed to fetch applications");
       return api.applications.list.responses[200].parse(await res.json());
     },
@@ -22,6 +22,7 @@ export function useApplyForJob() {
       const res = await fetch(api.applications.create.path, {
         method: api.applications.create.method,
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ jobId }),
       });
       if (!res.ok) throw new Error("Failed to apply for job");
@@ -51,6 +52,7 @@ export function useUpdateApplicationStatus() {
       const res = await fetch(url, {
         method: api.applications.updateStatus.method,
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ status }),
       });
       if (!res.ok) throw new Error("Failed to update status");

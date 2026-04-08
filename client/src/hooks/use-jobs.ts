@@ -6,7 +6,7 @@ export function useJobs() {
   return useQuery({
     queryKey: [api.jobs.list.path],
     queryFn: async () => {
-      const res = await fetch(api.jobs.list.path);
+      const res = await fetch(api.jobs.list.path, { credentials: "include" });
       if (!res.ok) throw new Error("Failed to fetch jobs");
       return api.jobs.list.responses[200].parse(await res.json());
     },
@@ -18,7 +18,7 @@ export function useJob(id: number) {
     queryKey: [api.jobs.get.path, id],
     queryFn: async () => {
       const url = buildUrl(api.jobs.get.path, { id });
-      const res = await fetch(url);
+      const res = await fetch(url, { credentials: "include" });
       if (res.status === 404) return null;
       if (!res.ok) throw new Error("Failed to fetch job");
       return api.jobs.get.responses[200].parse(await res.json());
@@ -36,6 +36,7 @@ export function useCreateJob() {
       const res = await fetch(api.jobs.create.path, {
         method: api.jobs.create.method,
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify(data),
       });
       if (!res.ok) throw new Error("Failed to create job");

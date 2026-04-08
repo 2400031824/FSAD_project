@@ -70,6 +70,16 @@ export async function registerRoutes(
       next();
     };
 
+  const getStudentStatus = (statuses: string[]) => {
+    if (statuses.some((status) => ["Joined", "Offer_Accepted", "Offer_Released", "selected"].includes(status))) {
+      return "PLACED";
+    }
+    if (statuses.length > 0) {
+      return "IN-PROGRESS";
+    }
+    return "UNPLACED";
+  };
+
   // Auth Routes
   app.post(api.auth.register.path, async (req, res) => {
     try {
@@ -220,6 +230,221 @@ export async function registerRoutes(
     const job = await storage.getJob(Number(req.params.id));
     if (!job) return res.status(404).json({ message: "Job not found" });
     res.json(job);
+  });
+
+  // Recruiters Routes
+  app.get(api.recruiters.list.path, requireRole("admin", "officer"), async (_req, res) => {
+    const employers = await storage.getAllEmployers();
+
+    const recruiterRows = await Promise.all(
+      employers.map(async (employer) => {
+        const user = await storage.getUser(employer.userId);
+        if (!user) return null;
+        const jobs = await storage.getJobsByEmployer(user.id);
+        const appsByJob = await Promise.all(jobs.map((job) => storage.getApplicationsByJob(job.id)));
+        const totalApplications = appsByJob.reduce((sum, apps) => sum + apps.length, 0);
+
+        return {
+          userId: user.id,
+          username: user.username,
+          name: user.name,
+          email: user.email,
+          companyName: employer.companyName,
+          industry: employer.industry ?? null,
+          website: employer.website ?? null,
+          isApproved: employer.isApproved ?? null,
+          activeDrives: jobs.length,
+          totalApplications,
+        };
+      }),
+    );
+
+    res.json(recruiterRows.filter(Boolean));
+  });
+
+  app.get(api.recruiters.details.path, requireRole("admin", "officer"), async (req, res) => {
+    const recruiterUserId = Number(req.params.id);
+    const user = await storage.getUser(recruiterUserId);
+    if (!user) {
+      return res.status(404).json({ message: "Recruiter not found" });
+    }
+    const employer = await storage.getEmployer(recruiterUserId);
+    if (!employer) {
+      return res.status(404).json({ message: "Recruiter profile not found" });
+    }
+
+    const jobs = await storage.getJobsByEmployer(user.id);
+    const appsByJob = await Promise.all(jobs.map((job) => storage.getApplicationsByJob(job.id)));
+    const totalApplications = appsByJob.reduce((sum, apps) => sum + apps.length, 0);
+
+    res.json({
+      recruiter: {
+        userId: user.id,
+        username: user.username,
+        name: user.name,
+        email: user.email,
+        companyName: employer.companyName,
+        industry: employer.industry ?? null,
+        website: employer.website ?? null,
+        isApproved: employer.isApproved ?? null,
+        activeDrives: jobs.length,
+        totalApplications,
+      },
+      jobs,
+    });
+  });
+
+  app.post(api.recruiters.create.path, requireRole("admin", "officer"), async (req, res) => {
+    try {
+      const input = api.recruiters.create.input.parse(req.body);
+      const existingByUsername = await storage.getUserByUsername(input.username);
+      if (existingByUsername) {
+        return res.status(400).json({ message: "Username already exists" });
+      }
+      const existingByEmail = await storage.getUserByEmail(input.email);
+      if (existingByEmail) {
+        return res.status(400).json({ message: "Email already exists" });
+      }
+
+      const hashedPassword = await hashPassword(input.password);
+      const user = await storage.createUser({
+        username: input.username,
+        password: hashedPassword,
+        role: "employer",
+        name: input.name,
+        email: input.email,
+      });
+
+      await storage.createEmployer({
+        userId: user.id,
+        companyName: input.companyName,
+        industry: input.industry || null,
+        website: input.website || null,
+      });
+
+      res.status(201).json(user);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({ message: err.errors[0]?.message || "Invalid input" });
+      }
+      console.error("Create recruiter error:", err);
+      res.status(500).json({ message: "Failed to create recruiter" });
+    }
+  });
+
+  // Students Routes
+  app.get(api.students.list.path, requireRole("admin", "officer"), async (_req, res) => {
+    const studentProfiles = await storage.getAllStudents();
+
+    const rows = await Promise.all(
+      studentProfiles.map(async (student) => {
+        const user = await storage.getUser(student.userId);
+        if (!user) return null;
+        const apps = await storage.getApplicationsByStudent(user.id);
+        const statuses = apps.map((app) => app.status);
+        const selectedCount = statuses.filter((status) =>
+          ["Joined", "Offer_Accepted", "Offer_Released", "selected"].includes(status),
+        ).length;
+
+        return {
+          userId: user.id,
+          username: user.username,
+          name: user.name,
+          email: user.email,
+          department: student.department ?? null,
+          cgpa: student.cgpa ?? null,
+          graduationYear: student.graduationYear ?? null,
+          resumeUrl: student.resumeUrl ?? null,
+          status: getStudentStatus(statuses),
+          applicationsCount: apps.length,
+          selectedCount,
+        };
+      }),
+    );
+
+    res.json(rows.filter(Boolean));
+  });
+
+  app.get(api.students.details.path, requireRole("admin", "officer"), async (req, res) => {
+    const studentUserId = Number(req.params.id);
+    const user = await storage.getUser(studentUserId);
+    if (!user) {
+      return res.status(404).json({ message: "Student not found" });
+    }
+    const student = await storage.getStudent(studentUserId);
+    if (!student) {
+      return res.status(404).json({ message: "Student profile not found" });
+    }
+    const apps = await storage.getApplicationsByStudent(user.id);
+    const statuses = apps.map((app) => app.status);
+    const selectedCount = statuses.filter((status) =>
+      ["Joined", "Offer_Accepted", "Offer_Released", "selected"].includes(status),
+    ).length;
+
+    res.json({
+      student: {
+        userId: user.id,
+        username: user.username,
+        name: user.name,
+        email: user.email,
+        department: student.department ?? null,
+        cgpa: student.cgpa ?? null,
+        graduationYear: student.graduationYear ?? null,
+        resumeUrl: student.resumeUrl ?? null,
+        status: getStudentStatus(statuses),
+        applicationsCount: apps.length,
+        selectedCount,
+      },
+      applications: apps.map((app) => ({
+        id: app.id,
+        jobId: app.jobId,
+        studentId: app.studentId,
+        status: app.status,
+        currentRound: app.currentRound,
+        remarks: app.remarks,
+        appliedAt: app.appliedAt,
+        updatedAt: app.updatedAt,
+      })),
+    });
+  });
+
+  app.post(api.students.create.path, requireRole("admin", "officer"), async (req, res) => {
+    try {
+      const input = api.students.create.input.parse(req.body);
+      const existingByUsername = await storage.getUserByUsername(input.username);
+      if (existingByUsername) {
+        return res.status(400).json({ message: "Username already exists" });
+      }
+      const existingByEmail = await storage.getUserByEmail(input.email);
+      if (existingByEmail) {
+        return res.status(400).json({ message: "Email already exists" });
+      }
+
+      const hashedPassword = await hashPassword(input.password);
+      const user = await storage.createUser({
+        username: input.username,
+        password: hashedPassword,
+        role: "student",
+        name: input.name,
+        email: input.email,
+      });
+
+      await storage.createStudent({
+        userId: user.id,
+        department: input.department || null,
+        cgpa: input.cgpa || null,
+        graduationYear: input.graduationYear ?? null,
+        resumeUrl: input.resumeUrl || null,
+      });
+
+      res.status(201).json(user);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({ message: err.errors[0]?.message || "Invalid input" });
+      }
+      console.error("Create student error:", err);
+      res.status(500).json({ message: "Failed to create student" });
+    }
   });
 
   // Applications Routes
