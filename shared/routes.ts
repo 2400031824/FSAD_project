@@ -25,7 +25,7 @@ export const api = {
   auth: {
     register: {
       method: "POST" as const,
-      path: "/api/register",
+      path: "/api/auth/register",
       input: insertUserSchema.extend({
         studentDetails: insertStudentSchema.omit({ userId: true }).optional(),
         employerDetails: insertEmployerSchema.omit({ userId: true }).optional(),
@@ -37,7 +37,7 @@ export const api = {
     },
     login: {
       method: "POST" as const,
-      path: "/api/login",
+      path: "/api/auth/login",
       input: z.object({
         username: z.string(),
         password: z.string(),
@@ -49,14 +49,14 @@ export const api = {
     },
     logout: {
       method: "POST" as const,
-      path: "/api/logout",
+      path: "/api/auth/logout",
       responses: {
         200: z.object({ message: z.string() }),
       },
     },
     me: {
       method: "GET" as const,
-      path: "/api/user",
+      path: "/api/auth/me",
       responses: {
         200: z.custom<typeof users.$inferSelect>(),
         401: errorSchemas.unauthorized,
@@ -64,6 +64,46 @@ export const api = {
     },
   },
   users: {
+    profile: {
+      method: "GET" as const,
+      path: "/api/profile",
+      responses: {
+        200: z.object({
+          user: z.custom<typeof users.$inferSelect>(),
+          student: z.custom<typeof students.$inferSelect>().nullable(),
+          employer: z.custom<typeof employers.$inferSelect>().nullable(),
+        }),
+      },
+    },
+    updateProfile: {
+      method: "PATCH" as const,
+      path: "/api/profile",
+      input: z.object({
+        name: z.string().min(1).optional(),
+        email: z.string().email().optional(),
+        student: z.object({
+          department: z.string().nullable().optional(),
+          cgpa: z.string().nullable().optional(),
+          graduationYear: z.number().nullable().optional(),
+          skills: z.string().nullable().optional(),
+          education: z.string().nullable().optional(),
+          projects: z.string().nullable().optional(),
+          resumeUrl: z.string().nullable().optional(),
+        }).optional(),
+        employer: z.object({
+          companyName: z.string().min(1).optional(),
+          industry: z.string().nullable().optional(),
+          website: z.string().nullable().optional(),
+        }).optional(),
+      }),
+      responses: {
+        200: z.object({
+          user: z.custom<typeof users.$inferSelect>(),
+          student: z.custom<typeof students.$inferSelect>().nullable(),
+          employer: z.custom<typeof employers.$inferSelect>().nullable(),
+        }),
+      },
+    },
     list: {
       method: "GET" as const,
       path: "/api/users", // Admin only
@@ -76,6 +116,21 @@ export const api = {
       path: "/api/employers/:id/approve",
       responses: {
         200: z.custom<typeof employers.$inferSelect>(),
+      },
+    },
+  },
+  notifications: {
+    list: {
+      method: "GET" as const,
+      path: "/api/notifications",
+      responses: {
+        200: z.array(z.object({
+          id: z.string(),
+          title: z.string(),
+          body: z.string(),
+          audience: z.string(),
+          createdAt: z.string(),
+        })),
       },
     },
   },
@@ -240,6 +295,14 @@ export const api = {
         404: errorSchemas.notFound,
       },
     },
+
+    getRecommendations: {
+      method: "GET" as const,
+      path: "/api/jobs/recommendations",
+      responses: {
+        200: z.array(z.custom<typeof jobs.$inferSelect & { employer?: typeof users.$inferSelect; matchScore?: number }>()),
+      },
+    },
   },
 applications: {
   list: {
@@ -281,7 +344,47 @@ applications: {
     },
   },
 },
-  stats: {
+  
+  interviews: {
+    createSlot: {
+      method: "POST" as const,
+      path: "/api/jobs/:id/slots",
+      input: z.object({
+        startTime: z.string(),
+        endTime: z.string(),
+        roundType: z.string(),
+      }),
+      responses: {
+        201: z.custom<any>(),
+      },
+    },
+    listSlots: {
+      method: "GET" as const,
+      path: "/api/jobs/:id/slots",
+      responses: {
+        200: z.array(z.custom<any>()),
+      },
+    },
+    bookSlot: {
+      method: "POST" as const,
+      path: "/api/slots/:id/book",
+      input: z.object({
+        applicationId: z.number(),
+      }),
+      responses: {
+        200: z.custom<any>(),
+      },
+    },
+    mySchedule: {
+      method: "GET" as const,
+      path: "/api/interviews/schedule",
+      responses: {
+        200: z.array(z.any()),
+      },
+    },
+  },
+
+stats: {
     get: {
       method: "GET" as const,
       path: "/api/stats", // Admin/Officer

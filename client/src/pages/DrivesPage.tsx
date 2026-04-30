@@ -34,50 +34,50 @@ const DRIVES = [
 
 function statusStyles(status: string) {
   if (status === "COMPLETED")
-    return "bg-emerald-500/15 text-emerald-300 border-emerald-500/40";
-  return "bg-slate-700/40 text-slate-100 border-slate-500/60";
+    return "border-[#c8f04a]/40 bg-[#c8f04a]/10 text-[#c8f04a]";
+  return "border-white/[0.16] bg-white/[0.06] text-[#f0ede8]/70";
 }
 
 export default function DrivesPage() {
   return (
-    <div className="space-y-8 text-slate-50">
+    <div className="space-y-8 text-[#f0ede8]">
       <div className="flex items-center justify-between gap-4">
         <div>
-          <p className="text-xs font-medium text-violet-300 uppercase tracking-[0.2em] mb-2">
+          <p className="pis-kicker mb-3">
             Drives
           </p>
-          <h1 className="text-3xl font-bold tracking-tight mb-1">
+          <h1 className="pis-page-title mb-3">
             Placement Drives
           </h1>
-          <p className="text-sm text-slate-400">
+          <p className="font-mono-ui text-sm text-[#f0ede8]/45">
             Upcoming and completed placement activities.
           </p>
         </div>
-        <button className="rounded-full bg-violet-600 px-4 py-2 text-xs font-medium shadow-lg shadow-violet-500/40 hover:bg-violet-500 transition-colors">
+        <button className="pis-button px-4 py-2 transition-opacity hover:opacity-85">
           + Schedule New Drive
         </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-px border border-white/[0.08] bg-white/[0.08] lg:grid-cols-2">
         {DRIVES.map((d) => (
           <Card
             key={d.company + d.role}
-            className="bg-gradient-to-b from-slate-950 via-slate-950 to-slate-900 border border-slate-800"
+            className="rounded-none border-0 bg-[#080808] transition-colors hover:bg-[#141414]"
           >
             <CardHeader className="flex flex-row items-center justify-between pb-3">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-slate-800 flex items-center justify-center text-sm font-semibold">
+                <div className="flex h-10 w-10 items-center justify-center bg-[#141414] text-sm font-extrabold text-[#c8f04a]">
                   {d.company[0]}
                 </div>
                 <div>
-                  <CardTitle className="text-base mb-0.5">
+                  <CardTitle className="mb-0.5 text-base text-[#f0ede8]">
                     {d.company}
                   </CardTitle>
-                  <p className="text-[11px] text-slate-400">{d.role}</p>
+                  <p className="font-mono-ui text-[11px] text-[#f0ede8]/42">{d.role}</p>
                 </div>
               </div>
               <Badge
-                className={`uppercase text-[10px] tracking-wide ${statusStyles(
+                className={`rounded-[2px] font-mono-ui text-[10px] uppercase tracking-wide ${statusStyles(
                   d.status,
                 )}`}
                 variant="outline"
@@ -85,14 +85,14 @@ export default function DrivesPage() {
                 {d.status}
               </Badge>
             </CardHeader>
-            <CardContent className="pt-0 flex items-center justify-between text-sm">
+            <CardContent className="flex items-center justify-between pt-0 text-sm">
               <div>
-                <p className="text-slate-400 text-[11px]">Package</p>
-                <p className="text-slate-100 font-medium">{d.package}</p>
+                <p className="font-mono-ui text-[11px] uppercase tracking-[0.1em] text-[#f0ede8]/40">Package</p>
+                <p className="font-medium text-[#f0ede8]">{d.package}</p>
               </div>
               <div>
-                <p className="text-slate-400 text-[11px]">Date</p>
-                <p className="text-slate-100 font-medium">{d.date}</p>
+                <p className="font-mono-ui text-[11px] uppercase tracking-[0.1em] text-[#f0ede8]/40">Date</p>
+                <p className="font-medium text-[#f0ede8]">{d.date}</p>
               </div>
             </CardContent>
           </Card>

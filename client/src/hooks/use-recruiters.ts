@@ -56,3 +56,33 @@ export function useCreateRecruiter() {
     },
   });
 }
+
+export function useApproveRecruiter() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const url = buildUrl(api.users.approveEmployer.path, { id });
+      const res = await fetch(url, {
+        method: api.users.approveEmployer.method,
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+      });
+
+      if (!res.ok) {
+        const payload = await res.json().catch(() => ({}));
+        throw new Error(payload.message || "Failed to approve recruiter");
+      }
+      return api.users.approveEmployer.responses[200].parse(await res.json());
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [api.recruiters.list.path] });
+      queryClient.invalidateQueries({ queryKey: [api.recruiters.details.path] });
+      toast({ title: "Approved", description: "Recruiter has been approved." });
+    },
+    onError: (error) => {
+      toast({ title: "Failed", description: error.message, variant: "destructive" });
+    },
+  });
+}

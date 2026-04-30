@@ -1,18 +1,74 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api, type InsertUser, type User } from "@shared/routes";
 import { useToast } from "@/hooks/use-toast";
-import { z } from "zod";
+
+// Shape that Spring Boot AuthResponse returns
+export interface AuthUser {
+  id?: number;
+  username: string;
+  name?: string;
+  email?: string;
+  role: string;
+  token?: string;
+}
+
+// Shape for RegisterRequest matching Spring Boot
+export interface RegisterPayload {
+  username: string;
+  password: string;
+  email: string;
+  name: string;
+  role: string;
+  // student fields (flat)
+  department?: string;
+  cgpa?: string;
+  graduationYear?: number;
+  // employer fields (flat)
+  companyName?: string;
+  industry?: string;
+}
+
+const SESSION_KEY = "pm_auth_user";
+
+function saveSession(user: AuthUser) {
+  sessionStorage.setItem(SESSION_KEY, JSON.stringify(user));
+}
+
+function clearSession() {
+  sessionStorage.removeItem(SESSION_KEY);
+}
+
+function loadSession(): AuthUser | null {
+  try {
+    const raw = sessionStorage.getItem(SESSION_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
 
 export function useUser() {
-  return useQuery({
-    queryKey: [api.auth.me.path],
+  return useQuery<AuthUser | null>({
+    queryKey: ["auth_user"],
     queryFn: async () => {
-      const res = await fetch(api.auth.me.path, { credentials: "include" });
-      if (res.status === 401) return null;
-      if (!res.ok) throw new Error("Failed to fetch user");
-      return api.auth.me.responses[200].parse(await res.json());
+      // Try Spring Boot /api/auth/profile first
+      try {
+        const stored = loadSession();
+        if (!stored?.token) return stored ?? null;
+
+        const res = await fetch("/api/auth/profile", {
+          headers: { Authorization: `Bearer ${stored.token}` },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          return { ...stored, ...data };
+        }
+      } catch {
+        // backend not reachable, fall back to session
+      }
+      return loadSession();
     },
     retry: false,
+    staleTime: 1000 * 60 * 5,
   });
 }
 
@@ -21,11 +77,10 @@ export function useLogin() {
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async (credentials: z.infer<typeof api.auth.login.input>) => {
-      const res = await fetch(api.auth.login.path, {
-        method: api.auth.login.method,
+    mutationFn: async (credentials: { username: string; password: string }) => {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
         body: JSON.stringify(credentials),
       });
 
@@ -33,18 +88,25 @@ export function useLogin() {
         if (res.status === 401) throw new Error("Invalid username or password");
         throw new Error("Login failed");
       }
-      return api.auth.login.responses[200].parse(await res.json());
+
+      const raw = await res.json();
+      const data: AuthUser = {
+        id: raw.id,
+        username: raw.username ?? credentials.username,
+        name: raw.name,
+        email: raw.email,
+        role: raw.role,
+        token: raw.token ?? raw.accessToken ?? raw.jwt,
+      };
+      saveSession(data);
+      return data;
     },
     onSuccess: (user) => {
-      queryClient.setQueryData([api.auth.me.path], user);
+      queryClient.setQueryData(["auth_user"], user);
       toast({ title: "Welcome back!", description: `Logged in as ${user.username}` });
     },
-    onError: (error) => {
-      toast({
-        title: "Login failed",
-        description: error.message,
-        variant: "destructive",
-      });
+    onError: (error: Error) => {
+      toast({ title: "Login failed", description: error.message, variant: "destructive" });
     },
   });
 }
@@ -54,33 +116,50 @@ export function useRegister() {
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async (data: z.infer<typeof api.auth.register.input>) => {
-      const res = await fetch(api.auth.register.path, {
-        method: api.auth.register.method,
+    mutationFn: async (data: RegisterPayload) => {
+      // Only send what Spring Boot RegisterRequest expects
+      const payload = {
+        username: data.username,
+        password: data.password,
+        email: data.email,
+        name: data.name,
+        role: data.role,
+      };
+
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
       });
 
       if (!res.ok) {
-        if (res.status === 400) {
-          const error = api.auth.register.responses[400].parse(await res.json());
-          throw new Error(error.message);
-        }
-        throw new Error("Registration failed");
+        let message = "Registration failed";
+        try {
+          const err = await res.json();
+          message = err.message || err.error || message;
+        } catch {}
+        throw new Error(message);
       }
-      return api.auth.register.responses[201].parse(await res.json());
+
+      // Handle both JWT response and plain user response
+      const raw = await res.json();
+      const user: AuthUser = {
+        id: raw.id,
+        username: raw.username ?? data.username,
+        name: raw.name ?? data.name,
+        email: raw.email ?? data.email,
+        role: raw.role ?? data.role,
+        token: raw.token ?? raw.accessToken ?? raw.jwt,
+      };
+      saveSession(user);
+      return user;
     },
     onSuccess: (user) => {
-      queryClient.setQueryData([api.auth.me.path], user);
+      queryClient.setQueryData(["auth_user"], user);
       toast({ title: "Welcome!", description: "Account created successfully" });
     },
-    onError: (error) => {
-      toast({
-        title: "Registration failed",
-        description: error.message,
-        variant: "destructive",
-      });
+    onError: (error: Error) => {
+      toast({ title: "Registration failed", description: error.message, variant: "destructive" });
     },
   });
 }
@@ -91,16 +170,15 @@ export function useLogout() {
 
   return useMutation({
     mutationFn: async () => {
-      const res = await fetch(api.auth.logout.path, {
-        method: api.auth.logout.method,
-        credentials: "include",
-      });
-      if (!res.ok) throw new Error("Logout failed");
+      clearSession();
+      // best-effort call to backend logout if it exists
+      try {
+        await fetch("/api/auth/logout", { method: "POST" });
+      } catch {}
     },
     onSuccess: () => {
-      queryClient.setQueryData([api.auth.me.path], null);
-      // Invalidate all queries to clear sensitive data
-      queryClient.invalidateQueries();
+      queryClient.setQueryData(["auth_user"], null);
+      queryClient.clear();
       toast({ title: "Goodbye!", description: "Logged out successfully" });
     },
   });

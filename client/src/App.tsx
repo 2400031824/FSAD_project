@@ -13,6 +13,9 @@ import RecruitersPage from "@/pages/RecruitersPage";
 import DrivesPage from "@/pages/DrivesPage";
 import ReportsPage from "@/pages/ReportsPage";
 import SettingsPage from "@/pages/SettingsPage";
+import InterviewsPage from "@/pages/InterviewsPage";
+import IngestionPage from "@/pages/IngestionPage";
+import ProfilePage from "@/pages/ProfilePage";
 import { Navigation } from "@/components/Navigation";
 import { useUser } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
@@ -27,8 +30,8 @@ function PrivateRoute({
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#020617]">
-        <Loader2 className="w-8 h-8 animate-spin text-indigo-400" />
+      <div className="flex min-h-screen items-center justify-center bg-[#080808]">
+        <Loader2 className="h-8 w-8 animate-spin text-[#c8f04a]" />
       </div>
     );
   }
@@ -39,9 +42,9 @@ function PrivateRoute({
   }
 
   return (
-    <div className="min-h-screen bg-[#020617] text-slate-50 flex">
+    <div className="flex min-h-screen bg-[#080808] text-[#f0ede8]">
       <Navigation />
-      <main className="flex-1 px-8 py-8 overflow-y-auto">
+      <main className="flex-1 overflow-y-auto px-5 py-6 md:px-8 md:py-8">
         <Component />
       </main>
     </div>
@@ -57,6 +60,12 @@ function Router() {
       {/* Protected Routes */}
       <Route path="/dashboard">
         <PrivateRoute component={Dashboard} />
+      </Route>
+      <Route path="/profile">
+        <PrivateRoute component={ProfilePage} />
+      </Route>
+      <Route path="/ingestion">
+        <PrivateRoute component={IngestionPage} />
       </Route>
       <Route path="/jobs">
         <PrivateRoute component={JobsPage} />
@@ -75,6 +84,9 @@ function Router() {
       </Route>
       <Route path="/settings">
         <PrivateRoute component={SettingsPage} />
+      </Route>
+      <Route path="/interviews">
+        <PrivateRoute component={InterviewsPage} />
       </Route>
 
       <Route component={NotFound} />

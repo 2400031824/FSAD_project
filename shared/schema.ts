@@ -69,6 +69,9 @@ export const students = sqliteTable("students", {
   cgpa: text("cgpa"),
   graduationYear: integer("graduation_year"),
   resumeUrl: text("resume_url"),
+  skills: text("skills"),
+  education: text("education"),
+  projects: text("projects"),
 });
 
 // =========================
@@ -139,6 +142,43 @@ export const applications = sqliteTable("applications", {
 });
 
 // =========================
+// Interview Slots Table
+// =========================
+
+export const interviewSlots = sqliteTable("interview_slots", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  
+  jobId: integer("job_id")
+    .references(() => jobs.id)
+    .notNull(),
+    
+  employerId: integer("employer_id")
+    .references(() => users.id)
+    .notNull(),
+    
+  startTime: integer("start_time", { mode: "timestamp" }).notNull(),
+  endTime: integer("end_time", { mode: "timestamp" }).notNull(),
+  
+  roundType: text("round_type").notNull(), 
+  
+  applicationId: integer("application_id")
+    .references(() => applications.id),
+    
+  studentId: integer("student_id")
+    .references(() => users.id),
+    
+  status: text("status")
+    .default("open")
+    .notNull(), 
+    
+  meetingLink: text("meeting_link"),
+  
+  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(
+    () => new Date()
+  ),
+});
+
+// =========================
 // Relations
 // =========================
 
@@ -161,15 +201,36 @@ export const jobsRelations = relations(jobs, ({ one, many }) => ({
     references: [users.id],
   }),
   applications: many(applications),
+  interviewSlots: many(interviewSlots),
 }));
 
-export const applicationsRelations = relations(applications, ({ one }) => ({
+export const applicationsRelations = relations(applications, ({ one, many }) => ({
   job: one(jobs, {
     fields: [applications.jobId],
     references: [jobs.id],
   }),
   student: one(users, {
     fields: [applications.studentId],
+    references: [users.id],
+  }),
+  interviewSlots: many(interviewSlots),
+}));
+
+export const interviewSlotsRelations = relations(interviewSlots, ({ one }) => ({
+  job: one(jobs, {
+    fields: [interviewSlots.jobId],
+    references: [jobs.id],
+  }),
+  employer: one(users, {
+    fields: [interviewSlots.employerId],
+    references: [users.id],
+  }),
+  application: one(applications, {
+    fields: [interviewSlots.applicationId],
+    references: [applications.id],
+  }),
+  student: one(users, {
+    fields: [interviewSlots.studentId],
     references: [users.id],
   }),
 }));
@@ -212,6 +273,15 @@ export const updateApplicationStatusSchema = z.object({
   remarks: z.string().optional(),
 });
 
+export const insertInterviewSlotSchema = createInsertSchema(interviewSlots).omit({
+  id: true,
+  createdAt: true,
+  applicationId: true,
+  studentId: true,
+  status: true,
+  meetingLink: true,
+});
+
 // =========================
 // Types
 // =========================
@@ -221,9 +291,11 @@ export type Student = typeof students.$inferSelect;
 export type Employer = typeof employers.$inferSelect;
 export type Job = typeof jobs.$inferSelect;
 export type Application = typeof applications.$inferSelect;
+export type InterviewSlot = typeof interviewSlots.$inferSelect;
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type InsertStudent = z.infer<typeof insertStudentSchema>;
 export type InsertEmployer = z.infer<typeof insertEmployerSchema>;
 export type InsertJob = z.infer<typeof insertJobSchema>;
 export type InsertApplication = z.infer<typeof insertApplicationSchema>;
+export type InsertInterviewSlot = z.infer<typeof insertInterviewSlotSchema>;
